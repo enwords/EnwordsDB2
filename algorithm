@@ -13,7 +13,7 @@
 6 создать AllSenIdsSet
 6 загрузить Links.csv в originalLinksSet
 5 создаем две линкед мапы widthAudio и withoutAudio
-5 Пройтись по файлу sentences.csv, парсим, если arr[0] содержится в originalLinksSet то{ если arr[0] содержится в setAudio то записываем в mapSenWithAudio arr[0] и всю строку, иначе записываем в mapSenWithoutAudio arr[0] и всю строку}
+5 Пройтись по файлу sentences.csv, парсим, если arr[0] содержится в originalLinksSet и если arr[1] содержится в mapAllLangSen то{ если arr[0] содержится в setAudio то записываем в mapSenWithAudio arr[0] и всю строку, иначе записываем в mapSenWithoutAudio arr[0] и всю строку}
 8 соединяем два мапа в один AllSentences (аудио должны быть сначала) AllSentences
 9  Пройтись по мап AllSentences, парсим, если arr[1] содержится в mapAllLangSen то запись в mapAllLangSen.get(arr[1]).put(key, value, экранируя ")
 
