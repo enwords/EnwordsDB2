@@ -3,13 +3,13 @@ import java.util.*;
 
 public class Main {
 
-    //    public static String[] languages = {"eng", "rus", "deu", "spa", "jpn", "cmn", "ara"};
-    public static String[] languages = {"eng", "rus"};
-    public static String[] unusualLanguages = {"jpn", "cmn", "ara"};
-    public static Set<String> unusualLanguagesSet = new HashSet<>(Arrays.asList(unusualLanguages));
+    private static String[] languages = {"eng", "rus", "deu", "spa", "jpn", "cmn", "ara"};
+    private static String[] unusualLanguages = {"jpn", "cmn", "ara"};
+    private static Set<String> unusualLanguagesSet = new HashSet<>(Arrays.asList(unusualLanguages));
 
     private static int superIdCounter = 1;
     private static int superIdCounterLimit = 50000;
+    private static int sentencesForOneWordLimit = 100;
 
 
     private static String learningLang;
@@ -20,15 +20,15 @@ public class Main {
     private static String wordsDir = dataDir + "words/";
 
 
-    public static Map<String, LinkedHashMap<String, String>> mapAllLangSen;
-    public static Map<String, TreeMap<Integer, String>> mapAllLangWord;
-    public static Map<String, String> allSentences;
-    public static Map<Integer, Set<String>> word_sentencesLinksMap;
+    private static Map<String, LinkedHashMap<String, String>> mapAllLangSen;
+    private static Map<String, TreeMap<Integer, String>> mapAllLangWord;
+    private static Map<String, String> allSentences;
+    private static Map<Integer, Set<String>> word_sentencesLinksMap;
 
 
-    public static Set<String> setAudio;
-    public static Set<String> allSenIdsSet;
-    public static Set<String> originalLinksSet;
+    private static Set<Integer> setAudio;
+    private static Set<String> allSenIdsSet;
+    private static Set<String> originalLinksSet;
 
 
     public static void main(String[] args) throws IOException {
@@ -96,8 +96,8 @@ public class Main {
 
     private void writeAudio(File file) throws FileNotFoundException {
         try (PrintWriter printWriter = new PrintWriter(file)) {
-            for (String s : setAudio) {
-                if (allSenIdsSet.contains(s)) {
+            for (Integer s : setAudio) {
+                if (allSenIdsSet.contains(s.toString())) {
                     printWriter.println(s);
                 }
             }
@@ -175,24 +175,32 @@ public class Main {
                 for (Map.Entry<String, Integer> pair : swappedWordMap.entrySet()) {
                     String word = pair.getKey();
                     wordId = pair.getValue();
+                    int counter = sentencesForOneWordLimit;
                     for (Map.Entry<String, String> senMap : mapAllLangSen.get(currentLang).entrySet()) {
-                        sentenceId = senMap.getKey();
-                        String sentence = senMap.getValue();
-                        if (sentence.contains(word)) {
-                            addToWordSentencesLinksMap(wordId, sentenceId);
+                        if (counter == 0) {
+                            break;
+                        } else {
+                            sentenceId = senMap.getKey();
+                            String sentence = senMap.getValue();
+                            if (sentence.contains(word)) {
+                                addToWordSentencesLinksMap(wordId, sentenceId);
+                                counter--;
+                            }
                         }
                     }
                 }
             } else {
                 for (Map.Entry<String, String> senMap : mapAllLangSen.get(currentLang).entrySet()) {
-                    sentenceId = senMap.getValue();
-                    String sentence = senMap.getKey();
+                    sentenceId = senMap.getKey();
+                    String sentence = senMap.getValue();
 
                     String[] words = removePunctuationAndDigits(sentence).split(" ");
                     for (String word : words) {
-                        wordId = swappedWordMap.get(word);
-                        if (swappedWordMap.containsKey(word)) {
+                        try {
+                            wordId = swappedWordMap.get(word);
                             addToWordSentencesLinksMap(wordId, sentenceId);
+                        } catch (Exception e) {
+
                         }
                     }
                 }
@@ -204,7 +212,7 @@ public class Main {
         Set<String> sentencesIdsForOneWord;
         try {
             sentencesIdsForOneWord = word_sentencesLinksMap.get(wordId);
-            if (sentencesIdsForOneWord.size() <= 100) {
+            if (sentencesIdsForOneWord.size() <= sentencesForOneWordLimit) {
                 sentencesIdsForOneWord.add(sentenceId);
                 allSenIdsSet.add(sentenceId);
                 word_sentencesLinksMap.put(wordId, sentencesIdsForOneWord);
@@ -235,27 +243,29 @@ public class Main {
 
             File file = new File(wordsDir + lang + ".txt");
             if (file.exists() && !file.isDirectory()) {
-                wordCountList = fileToList(file);
+                wordCountList = fileWordsToList(file);
             } else {
                 wordCountList = countingWords(allSentencesOfCurrentLang);
             }
 
-
             Map<Integer, String> map = mapAllLangWord.get(lang);
             map.putAll(setIdToWords(wordCountList));
-
-
         }
 
     }
 
     private Map<Integer, String> setIdToWords(List<String> wordList) {
         Map<Integer, String> res = new TreeMap<>();
+
+        int count = superIdCounterLimit;
         for (String line : wordList) {
 
             String word = line.split(" ")[0];
             res.put(superIdCounter, word);
             superIdCounter++;
+            count--;
+            if (count == 0) break;
+
         }
         while ((superIdCounter - 1) % superIdCounterLimit != 0) {
             superIdCounter++;
@@ -264,7 +274,21 @@ public class Main {
 
     }
 
-    public List<String> fileToList(File file) throws IOException {
+    private List<String> fileWordsToList(File file) throws IOException {
+        List<String> result = new ArrayList<>();
+
+        try (BufferedReader fileReader = new BufferedReader(new FileReader(file.getAbsolutePath()))) {
+            String line;
+            while (fileReader.ready()) {
+                if (result.size() >= superIdCounterLimit) break;
+                line = fileReader.readLine();
+                result.add(line);
+            }
+        }
+        return result;
+    }
+
+    private List<String> fileToList(File file) throws IOException {
         List<String> result = new ArrayList<>();
 
         try (BufferedReader fileReader = new BufferedReader(new FileReader(file.getAbsolutePath()))) {
@@ -323,41 +347,32 @@ public class Main {
         return res;
     }
 
-    public Set<String> conditions(String[] words) {
+    private Set<String> conditions(String[] words) {
         Set<String> set = new HashSet<>();
-        if ("eng".equals(learningLang)) {
-            for (String word : words) {
-                if (((word.length() > 1) || "i".equals(word)) && word.length() <= 20 && !word.startsWith("'")
-                        && (!"tom".equals(word) && !"mary".equals(word) && !"tatoeba".equals(word) && !"th".equals(word)
-                        && !"".equals(word) && !word.startsWith("tom'") && !word.startsWith("mary'"))) {
 
-                    set.add(word);
-                }
-            }
-        } else if (unusualLanguagesSet.contains(learningLang)) {
-            for (String word : words) {
-                if (word.length() <= 20 && (!"tom".equals(word) && !"mary".equals(word) && !"tatoeba".equals(word)
-                        && !"".equals(word))) {
 
+        for (String word : words) {
+//            if (word.length() > 1 && word.length() < 21 && !word.startsWith("'")  && (!"tom".equals(word) &&
+//                    !"mary".equals(word) && !"tatoeba".equals(word) && !"th".equals(word) &&
+//                    !"".equals(word) && !word.startsWith("tom'") && !word.startsWith("mary'"))){
+            if (word.length() > 1 && word.length() < 21 && (!"tom".equals(word) &&
+                    !"mary".equals(word) && !"tatoeba".equals(word) &&
+                    !"".equals(word))) {
+                if (unusualLanguagesSet.contains(learningLang)) {
                     word = word.replaceAll("[а-яА-Яa-zA-Z]", "");
-                    if (!"".equals(word)) set.add(word);
+                } else if ("rus".equals(learningLang)) {
+                    word = word.replaceAll("[a-zA-Z]", "");
                 }
-            }
 
-        } else {
-            for (String word : words) {
-                if (word.length() <= 20 && (!"tom".equals(word) && !"mary".equals(word)
-                        && !"tatoeba".equals(word) && !"".equals(word))) {
-
-                    set.add(word);
-                }
+                if (!"".equals(word)) set.add(word);
             }
         }
         return set;
     }
 
-    public String removePunctuationAndDigits(String word) {
-        String res = word.replaceAll("[^'\\p{L}]+", " ").toLowerCase();
+    private String removePunctuationAndDigits(String word) {
+//        String res = word.replaceAll("[^'\\p{L}]+", " ").toLowerCase();
+        String res = word.replaceAll("[^\\p{L}]+", " ").toLowerCase();
         if ("eng".equals(learningLang)) {
             String[] arr = res.split(" ");
             for (String s : arr) {
@@ -376,7 +391,7 @@ public class Main {
         }
     }
 
-    public static String replaceLast(String text, String regex, String replacement) {
+    private static String replaceLast(String text, String regex, String replacement) {
         return text.replaceFirst("(?s)" + regex + "(?!.*?" + regex + ")", replacement);
     }
 
@@ -403,19 +418,19 @@ public class Main {
 
     private void initialize() throws IOException {
         allSenIdsSet = new LinkedHashSet<>();
-        word_sentencesLinksMap = new LinkedHashMap<>();
+        word_sentencesLinksMap = new TreeMap<>();
         mapAllLangSen = new LinkedHashMap<>();
         mapAllLangWord = new LinkedHashMap<>();
         for (String lang : languages) {
             mapAllLangSen.put(lang, new LinkedHashMap());
             mapAllLangWord.put(lang, new TreeMap<>());
         }
-        setAudio = fileToSet(new File("src/development/files/sentences_with_audio.csv"));
+        setAudio = audioFileToSet(new File("src/development/files/sentences_with_audio.csv"));
         originalLinksSet = fileToSet(new File("src/development/files/links.csv"));
         allSentences = readSentencesFile(new File("src/development/files/sentences.csv"));
     }
 
-    public String convertStringForTSV(String text) {
+    private String convertStringForTSV(String text) {
         if (text.contains("\"")) {
             text = "\"" + text.replaceAll("\"", "\"\"") + "\"";
         }
@@ -438,7 +453,7 @@ public class Main {
                 id = arr[0];
                 lang = arr[1];
                 if (originalLinksSet.contains(id) && mapAllLangSen.containsKey(lang)) {
-                    if (setAudio.contains(id)) {
+                    if (setAudio.contains(Integer.parseInt(id))) {
                         withAudio.put(id, line);
                     } else withoutAudio.put(id, line);
                 }
@@ -455,46 +470,34 @@ public class Main {
         dir1.mkdir();
     }
 
-    public <T> Set<T> fileToSet(File file) throws IOException {
+    private <T> Set<T> fileToSet(File file) throws IOException {
         Set<T> result = new HashSet<>();
         String line;
         try (BufferedReader fileReader = new BufferedReader(new FileReader(file.getAbsolutePath()))) {
             while (fileReader.ready()) {
                 line = fileReader.readLine();
-                try {
-                    String[] arr = parseLineLight(line);
-
-                    result.add((T) arr[0]);
-                    result.add((T) arr[1]);
-                } catch (ArrayIndexOutOfBoundsException e) {
-                    result.add((T) line);
-                }
-
-
+                String[] arr = parseLineLight(line);
+                result.add((T) arr[0]);
+                result.add((T) arr[1]);
             }
         }
         return result;
     }
 
 
-    public <T> Set<T> fileToSet(File file, int param) throws IOException {
-        Set<T> result = new HashSet<>();
-
+    private Set<Integer> audioFileToSet(File file) throws IOException {
+        Set<Integer> result = new TreeSet<>();
+        String line;
         try (BufferedReader fileReader = new BufferedReader(new FileReader(file.getAbsolutePath()))) {
-            String line;
             while (fileReader.ready()) {
                 line = fileReader.readLine();
-
-                String[] arr = parseLineLight(line);
-
-                result.add((T) arr[param]);
-
+                result.add(Integer.parseInt(line));
             }
         }
         return result;
     }
 
-    public String[] parseLineLight(String line) {
+    private String[] parseLineLight(String line) {
         String[] list = line.split("\\t");
         return list;
     }
