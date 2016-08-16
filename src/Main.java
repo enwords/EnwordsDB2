@@ -3,12 +3,12 @@ import java.util.*;
 
 public class Main {
 
-    private static String[] languages = {"eng", "rus", "deu", "spa", "jpn", "cmn", "ara"};
+    private static String[] languages = {"eng", "epo", "tur", "ita", "rus", "deu", "fra", "spa", "por", "jpn", "hun", "heb", "ber", "pol", "mkd", "fin", "nld", "cmn", "mar", "ukr", "swe", "dan", "srp", "bul", "ces", "ina", "lat", "ara", "nds", "lit", "pes"};
     private static String[] unusualLanguages = {"jpn", "cmn", "ara"};
     private static Set<String> unusualLanguagesSet = new HashSet<>(Arrays.asList(unusualLanguages));
 
     private static int superIdCounter = 1;
-    private static int superIdCounterLimit = 50000;
+    private static int superIdCounterLimit = 25000;
     private static int sentencesForOneWordLimit = 100;
 
 
@@ -135,11 +135,11 @@ public class Main {
     }
 
     private void writeLinks(List<String> linksList, File outFile) throws IOException {
+        StringTokenizer st;
         try (PrintWriter printWriter = new PrintWriter(outFile)) {
-
             for (String line : linksList) {
-                String[] arr = parseLineLight(line);
-                if (allSenIdsSet.contains(arr[0]) && allSenIdsSet.contains(arr[1])) {
+                st = new StringTokenizer(line, "\t");
+                if (allSenIdsSet.contains(st.nextToken()) && allSenIdsSet.contains(st.nextToken())) {
                     printWriter.println(line);
                 }
             }
@@ -147,12 +147,13 @@ public class Main {
     }
 
     private void writeWordSentencesLinks(File file) throws FileNotFoundException {
+        int wordId;
+        Set<String> senIds;
+
         try (PrintWriter printWriter = new PrintWriter(file)) {
-
             for (Map.Entry<Integer, Set<String>> pair : word_sentencesLinksMap.entrySet()) {
-                int wordId = pair.getKey();
-
-                Set<String> senIds = pair.getValue();
+                wordId = pair.getKey();
+                senIds = pair.getValue();
 
                 for (String senId : senIds) {
                     printWriter.println(wordId + "\t" + senId);
@@ -190,14 +191,17 @@ public class Main {
                     }
                 }
             } else {
+
+                StringTokenizer st;
                 for (Map.Entry<String, String> senMap : mapAllLangSen.get(currentLang).entrySet()) {
                     sentenceId = senMap.getKey();
                     String sentence = senMap.getValue();
 
-                    String[] words = removePunctuationAndDigits(sentence).split(" ");
-                    for (String word : words) {
+                    st = new StringTokenizer(removePunctuationAndDigits(sentence));
+
+                    while (st.hasMoreTokens()) {
                         try {
-                            wordId = swappedWordMap.get(word);
+                            wordId = swappedWordMap.get(st.nextToken());
                             addToWordSentencesLinksMap(wordId, sentenceId);
                         } catch (Exception e) {
 
@@ -403,13 +407,13 @@ public class Main {
         String lang;
         String sentence;
         LinkedHashMap<String, String> res;
+        StringTokenizer st;
         for (Map.Entry<String, String> pair : allSentences.entrySet()) {
-            id = pair.getKey();
             line = pair.getValue();
-
-            String arr[] = parseLineLight(line);
-            lang = arr[1];
-            sentence = arr[2];
+            st = new StringTokenizer(line, "\t");
+            id = st.nextToken();
+            lang = st.nextToken();
+            sentence = st.nextToken();
             res = mapAllLangSen.get(lang);
             res.put(id, sentence);
             mapAllLangSen.put(lang, res);
@@ -446,12 +450,12 @@ public class Main {
             String line;
             String id;
             String lang;
+            StringTokenizer st;
             while (fileReader.ready()) {
                 line = fileReader.readLine();
-                String[] arr = parseLineLight(line);
-
-                id = arr[0];
-                lang = arr[1];
+                st = new StringTokenizer(line, "\t");
+                id = st.nextToken();
+                lang = st.nextToken();
                 if (originalLinksSet.contains(id) && mapAllLangSen.containsKey(lang)) {
                     if (setAudio.contains(Integer.parseInt(id))) {
                         withAudio.put(id, line);
@@ -474,11 +478,14 @@ public class Main {
         Set<T> result = new HashSet<>();
         String line;
         try (BufferedReader fileReader = new BufferedReader(new FileReader(file.getAbsolutePath()))) {
+            StringTokenizer st;
             while (fileReader.ready()) {
                 line = fileReader.readLine();
-                String[] arr = parseLineLight(line);
-                result.add((T) arr[0]);
-                result.add((T) arr[1]);
+
+                st = new StringTokenizer(line, "\t");
+
+                result.add((T) st.nextToken());
+                result.add((T) st.nextToken());
             }
         }
         return result;
@@ -495,10 +502,5 @@ public class Main {
             }
         }
         return result;
-    }
-
-    private String[] parseLineLight(String line) {
-        String[] list = line.split("\\t");
-        return list;
     }
 }
