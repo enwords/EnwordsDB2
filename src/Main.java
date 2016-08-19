@@ -3,8 +3,8 @@ import java.util.*;
 
 public class Main {
 
-    private static String[] languages = {"eng", "epo", "tur", "ita", "rus", "deu", "fra", "spa", "por", "jpn", "hun", "heb", "ber", "pol", "mkd", "fin", "nld", "cmn", "mar", "ukr", "swe", "dan", "srp", "bul", "ces", "ina", "lat", "ara", "nds", "lit", "pes"};
-    private static String[] unusualLanguages = {"jpn", "cmn", "ara"};
+    private static String[] languages = {"eng", "epo", "tur", "ita", "rus", "deu", "fra", "spa", "por", "jpn", "hun", "heb", "ber", "pol", "mkd", "fin", "nld", "cmn", "mar", "ukr", "swe", "dan", "srp", "bul", "ces", "ina", "lat", "ara", "nds", "lit"};
+    private static String[] unusualLanguages = {"jpn", "cmn"};
     private static Set<String> unusualLanguagesSet = new HashSet<>(Arrays.asList(unusualLanguages));
 
     private static int superIdCounter = 1;
@@ -82,16 +82,14 @@ public class Main {
     }
 
     private void writeToFiles() throws IOException {
-        List<String> linksList = fileToList(new File("src/development/files/links.csv"));
-
-
         writeWordSentencesLinks(new File(dataDir + "word_sentence.tsv"));
-        writeLinks(linksList, new File(dataDir + "links.tsv"));
         writeSentences(new File(dataDir + "sentences.tsv"));
         writeWords(new File(dataDir + "words.tsv"));
         writeAudio(new File(dataDir + "audio.tsv"));
 
-
+        resetStaticCollections();
+        List<String> linksList = fileToList(new File("src/development/files/links.csv"));
+        writeLinks(linksList, new File(dataDir + "links.tsv"));
     }
 
     private void writeAudio(File file) throws FileNotFoundException {
@@ -502,5 +500,15 @@ public class Main {
             }
         }
         return result;
+    }
+
+    private void resetStaticCollections() {
+        mapAllLangSen = new HashMap<>();
+        mapAllLangWord = new HashMap<>();
+        allSentences = new HashMap<>();
+        word_sentencesLinksMap = new HashMap<>();
+
+        setAudio = new HashSet<>();
+        originalLinksSet = new HashSet<>();
     }
 }
