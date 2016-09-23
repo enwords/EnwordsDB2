@@ -3413,7 +3413,7 @@
 踊る
 レーダー
 夜間
-東映 (Company name: see Toei Company)
+東映
 地図
 南海
 歯
@@ -3477,7 +3477,7 @@
 祐
 幼少
 構内
-東宝 (Company name: see Toho)
+東宝
 審議
 相撲
 表彰
@@ -3740,7 +3740,7 @@
 甲子園
 構える
 建立
-阪急 (Company name: see Hankyu Railway)
+阪急
 繰り広げる
 考案
 創作
@@ -4198,7 +4198,7 @@
 着陸
 行列
 アドレス
-松竹 (Company name: see Shochiku)
+松竹
 アルコール
 努力
 公社
