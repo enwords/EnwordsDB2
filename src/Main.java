@@ -10,6 +10,7 @@ public class Main {
     private static int superIdCounter = 1;
     private static int superIdCounterLimit = 25000;
     private static int sentencesForOneWordLimit = 100;
+    private static int maxSentenceLength = 150;
 
 
     private static String learningLang;
@@ -448,13 +449,15 @@ public class Main {
             String line;
             String id;
             String lang;
+            String sen;
             StringTokenizer st;
             while (fileReader.ready()) {
                 line = fileReader.readLine();
                 st = new StringTokenizer(line, "\t");
                 id = st.nextToken();
                 lang = st.nextToken();
-                if (originalLinksSet.contains(id) && mapAllLangSen.containsKey(lang)) {
+                sen = st.nextToken();
+                if (originalLinksSet.contains(id) && mapAllLangSen.containsKey(lang) && sen.length() <= maxSentenceLength) {
                     if (setAudio.contains(Integer.parseInt(id))) {
                         withAudio.put(id, line);
                     } else withoutAudio.put(id, line);
