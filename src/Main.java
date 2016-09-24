@@ -111,7 +111,10 @@ public class Main {
                 for (Map.Entry<Integer, String> wrds : ids_words.entrySet()) {
                     int id = wrds.getKey();
                     String word = wrds.getValue();
-                    printWriter.println(id + "\t" + lang + "\t" + word);
+
+                    if (word_sentencesLinksMap.containsKey(id)) {
+                        printWriter.println(id + "\t" + lang + "\t" + word);
+                    }
                 }
             }
         }
